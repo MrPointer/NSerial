@@ -50,13 +50,12 @@ namespace SerialNET.Connection
             }
         }
 
-        public static IConnectionPool LocalConnectionPool =>
-            sm_uniqueConnectionPool ?? (sm_uniqueConnectionPool = new ConnectionPool());
+        public static IConnectionPool LocalConnectionPool => srm_LocalConnectionPool.Value;
 
         private Dictionary<ConnectionInfo, ISerialConnection> m_connections =
             new Dictionary<ConnectionInfo, ISerialConnection>();
 
-        private static ConnectionPool sm_uniqueConnectionPool =
-            new Lazy<ConnectionPool>(() => new ConnectionPool()).Value;
+        private static readonly Lazy<ConnectionPool> srm_LocalConnectionPool =
+            new Lazy<ConnectionPool>(() => new ConnectionPool());
     }
 }
