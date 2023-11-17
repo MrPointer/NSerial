@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace SerialNET.Control
+namespace NSerial.Control
 {
     /// <summary>
     /// Interface representing a signal sender on a specific pin.

@@ -1,4 +1,4 @@
-﻿namespace SerialNET.Model
+﻿namespace NSerial.Model
 {
     public struct ConnectionInfo
     {

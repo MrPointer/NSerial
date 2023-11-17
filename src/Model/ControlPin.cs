@@ -1,4 +1,4 @@
-﻿namespace SerialNET.Model
+﻿namespace NSerial.Model
 {
     /// <summary>
     /// An enum listing all of the ping on a serial DE9 port that are used for signaling.

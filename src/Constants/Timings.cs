@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SerialNET.Constants
+namespace NSerial.Constants
 {
     /// <summary>
     /// Contains timing constants.

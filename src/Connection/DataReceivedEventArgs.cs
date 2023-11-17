@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SerialNET.Connection
+namespace NSerial.Connection
 {
     /// <summary>
     /// An object representing the event args of an event that's raised when data has been received and read from the RS232 port.

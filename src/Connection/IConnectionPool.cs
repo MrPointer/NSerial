@@ -1,7 +1,7 @@
-﻿using OneOf;
-using SerialNET.Model;
+﻿using NSerial.Model;
+using OneOf;
 
-namespace SerialNET.Connection
+namespace NSerial.Connection
 {
     public enum ConnectionPoolError
     {

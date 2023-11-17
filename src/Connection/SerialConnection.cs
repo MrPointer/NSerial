@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
 using System.Threading.Tasks;
-using SerialNET.Control;
-using SerialNET.Model;
+using NSerial.Control;
+using NSerial.Model;
 
-namespace SerialNET.Connection
+namespace NSerial.Connection
 {
     public class SerialConnection : ISerialConnection
     {

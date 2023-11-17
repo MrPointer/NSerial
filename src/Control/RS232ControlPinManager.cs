@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO.Ports;
 using System.Threading.Tasks;
-using SerialNET.Constants;
-using SerialNET.Model;
+using NSerial.Constants;
+using NSerial.Model;
 
-namespace SerialNET.Control
+namespace NSerial.Control
 {
     /// <summary>
     /// Manages control pins of RS232 serial port.

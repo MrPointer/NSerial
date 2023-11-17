@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
-using SerialNET.Model;
+using NSerial.Model;
 
-namespace SerialNET.Connection
+namespace NSerial.Connection
 {
     public class ConnectionPool : IConnectionPool
     {

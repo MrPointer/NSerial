@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using SerialNET.Control;
+using NSerial.Control;
 
-namespace SerialNET.Connection
+namespace NSerial.Connection
 {
     public interface ISerialConnection
     {
