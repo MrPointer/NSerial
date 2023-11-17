@@ -17,7 +17,7 @@ namespace NSerial.Connection
             RtsPinManager = new RS232ControlPinManager(ControlPin.RTS, underlyingConnection);
             DtrPinSignalSender = DtrPinManager as RS232ControlPinManager;
             RtsPinSignalSender = RtsPinManager as RS232ControlPinManager;
-            
+
             UnderlyingConnection.DataReceived += (sender, args) =>
             {
                 byte[] receiveBuffer =

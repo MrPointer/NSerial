@@ -6,6 +6,7 @@ namespace NSerial.Connection
     public enum ConnectionPoolError
     {
         ConnectionAlreadyExists,
+        FailedToCreateConnection,
         ConnectionDoesNotExist
     }
 
@@ -31,12 +32,14 @@ namespace NSerial.Connection
     {
         ConnectionPoolResult CreateConnection(ConnectionInfo connectionInfo);
 
-        ConnectionPoolResult GetConnection(ConnectionInfo connectionInfo);
+        ConnectionPoolResult GetConnection(string portName);
 
         bool ContainsConnection(ConnectionInfo connectionInfo);
 
+        bool ContainsConnection(string portName);
+
         void RemoveConnection(ISerialConnection connection);
 
-        void RemoveConnection(ConnectionInfo connectionInfo);
+        void RemoveConnection(string portName);
     }
 }
