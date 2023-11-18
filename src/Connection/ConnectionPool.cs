@@ -7,32 +7,22 @@ using NSerial.Model;
 
 namespace NSerial.Connection
 {
-    public class ManagedConnection
-    {
-        public ManagedConnection(ConnectionInfo connectionInfo, ISerialConnection connection)
-        {
-            ConnectionInfo = connectionInfo;
-            Connection = connection;
-        }
-
-        public ConnectionInfo ConnectionInfo { get; }
-
-        public ISerialConnection Connection { get; set; }
-    }
-
+    /// <inheritdoc />
     public class ConnectionPool : IConnectionPool
     {
+        /// <inheritdoc />
         public ConnectionPoolResult CreateConnection(ConnectionInfo connectionInfo)
         {
-            if (m_connections.ContainsKey(connectionInfo.PortName))
+            if (Connections.ContainsKey(connectionInfo.PortName))
             {
                 return ConnectionPoolError.ConnectionAlreadyExists;
             }
 
             try
             {
-                var connection = new SerialConnection(new SerialPort(connectionInfo.PortName, connectionInfo.BaudRate));
-                m_connections.Add(connectionInfo.PortName, new ManagedConnection(connectionInfo, connection));
+                var connection = new SerialConnection(new SerialPort(connectionInfo.PortName, connectionInfo.BaudRate),
+                    connectionInfo);
+                Connections.Add(connectionInfo.PortName, connection);
                 return ConnectionPoolResult.FromISerialConnection(connection);
             }
             catch (IOException)
@@ -41,46 +31,80 @@ namespace NSerial.Connection
             }
         }
 
+        /// <inheritdoc />
         public ConnectionPoolResult GetConnection(string portName)
         {
-            return !m_connections.ContainsKey(portName)
+            return !Connections.ContainsKey(portName)
                 ? ConnectionPoolError.ConnectionDoesNotExist
-                : ConnectionPoolResult.FromISerialConnection(m_connections[portName].Connection);
+                : ConnectionPoolResult.FromISerialConnection(Connections[portName]);
         }
 
-        public bool ContainsConnection(ConnectionInfo connectionInfo)
+        /// <inheritdoc />
+        public ConnectionPoolResult GetConnection(ConnectionInfo connectionInfo)
         {
-            return m_connections.FirstOrDefault(pair => pair.Value.ConnectionInfo == connectionInfo).Key != default;
+            var getResult = GetConnection(connectionInfo.PortName);
+            return getResult.Match(
+                connection => connection.ConnectionInfo == connectionInfo
+                    ? ConnectionPoolResult.FromISerialConnection(connection)
+                    : ConnectionPoolError.ConnectionDoesNotExist,
+                error => error);
         }
 
+        /// <inheritdoc />
         public bool ContainsConnection(string portName)
         {
-            return m_connections.ContainsKey(portName);
+            return Connections.ContainsKey(portName);
         }
 
-        public void RemoveConnection(ISerialConnection connection)
+        /// <inheritdoc />
+        public bool ContainsConnection(ConnectionInfo connectionInfo)
         {
-            var matchingConnectionPair = m_connections.FirstOrDefault(pair => pair.Value.Connection == connection);
-            if (matchingConnectionPair.Key != default)
-            {
-                m_connections.Remove(matchingConnectionPair.Key);
-            }
+            return Connections.Values.Any(connection => connection.ConnectionInfo == connectionInfo);
         }
 
+        /// <inheritdoc />
+        public bool ContainsConnection(ISerialConnection connection)
+        {
+            return Connections.Values.Contains(connection);
+        }
+
+        /// <inheritdoc />
         public void RemoveConnection(string portName)
         {
-            if (m_connections.ContainsKey(portName))
+            if (Connections.ContainsKey(portName))
             {
-                m_connections.Remove(portName);
+                Connections.Remove(portName);
             }
         }
 
-        private Dictionary<string, ManagedConnection> m_connections =
-            new Dictionary<string, ManagedConnection>();
+        /// <inheritdoc />
+        public void RemoveConnection(ConnectionInfo connectionInfo)
+        {
+            var getResult = GetConnection(connectionInfo);
+            getResult.Switch(
+                connection => RemoveConnection(connection.ConnectionInfo.PortName),
+                _ => { });
+        }
 
+        /// <inheritdoc />
+        public void RemoveConnection(ISerialConnection connection)
+        {
+            var getResult = GetConnection(connection.ConnectionInfo);
+            getResult.Switch(
+                _ => RemoveConnection(connection.ConnectionInfo.PortName),
+                _ => { });
+        }
+
+        /// <inheritdoc />
+        public IDictionary<string, ISerialConnection> Connections { get; } =
+            new Dictionary<string, ISerialConnection>();
+
+        /// <summary>
+        /// System-wide connection pool, used as a singleton.
+        /// This is the recommended way to access the connection pool.
+        /// </summary>
         public static IConnectionPool LocalConnectionPool => srm_LocalConnectionPool.Value;
 
-        private static readonly Lazy<ConnectionPool> srm_LocalConnectionPool =
-            new Lazy<ConnectionPool>(() => new ConnectionPool());
+        private static readonly Lazy<ConnectionPool> srm_LocalConnectionPool = new(() => new ConnectionPool());
     }
 }

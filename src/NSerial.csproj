@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
         <OutputType>Library</OutputType>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <AssemblyTitle>SerialNET</AssemblyTitle>
         <Product>SerialNET</Product>
         <Copyright>Copyright © Timor Gruber 2023</Copyright>
+        <LangVersion>latest</LangVersion>
+        <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <DocumentationFile>bin\Debug\SerialNET.XML</DocumentationFile>
@@ -13,6 +15,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
         <PackageReference Include="OneOf" Version="3.0.263"/>
+        <PackageReference Include="Optional2" Version="5.1.0"/>
         <PackageReference Include="System.IO.Ports" Version="6.0.0"/>
     </ItemGroup>
 </Project>
