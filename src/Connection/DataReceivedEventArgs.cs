@@ -1,24 +1,23 @@
 ﻿using System;
 
-namespace NSerial.Connection
+namespace NSerial.Connection;
+
+/// <summary>
+/// An object representing the event args of an event that's raised when data has been received and read from the RS232 port.
+/// </summary>
+public class DataReceivedEventArgs : EventArgs
 {
     /// <summary>
-    /// An object representing the event args of an event that's raised when data has been received and read from the RS232 port.
+    /// Creates a new instance of <see cref="DataReceivedEventArgs"/>.
     /// </summary>
-    public class DataReceivedEventArgs : EventArgs
+    /// <param name="buffer">Received buffer as an array of bytes.</param>
+    public DataReceivedEventArgs(Memory<byte> buffer)
     {
-        /// <summary>
-        /// Creates a new instance of <see cref="DataReceivedEventArgs"/>.
-        /// </summary>
-        /// <param name="buffer">Received buffer as an array of bytes.</param>
-        public DataReceivedEventArgs(Memory<byte> buffer)
-        {
-            Buffer = buffer;
-        }
-
-        /// <summary>
-        /// Received buffer as an array of bytes.
-        /// </summary>
-        public Memory<byte> Buffer { get; private set; }
+        Buffer = buffer;
     }
+
+    /// <summary>
+    /// Received buffer as an array of bytes.
+    /// </summary>
+    public Memory<byte> Buffer { get; private set; }
 }
