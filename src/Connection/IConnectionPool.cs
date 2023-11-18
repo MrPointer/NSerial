@@ -65,12 +65,21 @@ namespace NSerial.Connection
     public interface IConnectionPool
     {
         /// <summary>
-        /// Creates a new connection in the pool if it does not already exist.
+        /// Adds a new connection to the pool if it does not already exist.
+        /// The connection is created from the given connection info.
         /// </summary>
         /// <param name="connectionInfo">The connection info to create the connection from.</param>
         /// <returns>A <see cref="ConnectionPoolResult"/> containing the <see cref="ISerialConnection"/> if created,
         /// <see cref="ConnectionPoolError"/> otherwise.</returns>
-        ConnectionPoolResult CreateConnection(ConnectionInfo connectionInfo);
+        ConnectionPoolResult AddConnection(ConnectionInfo connectionInfo);
+
+        /// <summary>
+        /// Adds a connection to the pool if it does not already exist.
+        /// </summary>
+        /// <param name="connection">The connection to add.</param>
+        /// <returns>A <see cref="ConnectionPoolResult"/> containing the <see cref="ISerialConnection"/> if added,
+        /// <see cref="ConnectionPoolError"/> otherwise.</returns>
+        ConnectionPoolResult AddConnection(ISerialConnection connection);
 
         /// <summary>
         /// Attempts to gets a connection from the pool using the port name, if it exists.

@@ -11,7 +11,7 @@ namespace NSerial.Connection
     public class ConnectionPool : IConnectionPool
     {
         /// <inheritdoc />
-        public ConnectionPoolResult CreateConnection(ConnectionInfo connectionInfo)
+        public ConnectionPoolResult AddConnection(ConnectionInfo connectionInfo)
         {
             if (Connections.ContainsKey(connectionInfo.PortName))
             {
@@ -29,6 +29,18 @@ namespace NSerial.Connection
             {
                 return ConnectionPoolError.FailedToCreateConnection;
             }
+        }
+
+        /// <inheritdoc />
+        public ConnectionPoolResult AddConnection(ISerialConnection connection)
+        {
+            if (Connections.ContainsKey(connection.ConnectionInfo.PortName))
+            {
+                return ConnectionPoolError.ConnectionAlreadyExists;
+            }
+
+            Connections.Add(connection.ConnectionInfo.PortName, connection);
+            return ConnectionPoolResult.FromISerialConnection(connection);
         }
 
         /// <inheritdoc />
