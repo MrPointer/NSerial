@@ -9,43 +9,53 @@ namespace NSerial.Tests.Unit.Control;
 
 public class SerialControlPinManagerTests
 {
-    public static TheoryData<TimeSpan> DurationTestData = new()
+    public static IEnumerable<TimeSpan> DurationTestData = new[]
     {
         TimeSpan.Zero,
-        TimeSpan.FromMilliseconds(100),
+        Timings.MinimumSignalSwitchTime - TimeSpan.FromMilliseconds(50),
         Timings.MinimumSignalSwitchTime,
         Timings.MinimumSignalSwitchTime + TimeSpan.FromMilliseconds(200)
     };
 
-    [Fact]
-    public void DtrPinCanBeEnabled()
+    [Theory]
+    [CombinatorialData]
+    public async Task PinCanBeEnabled(ControlPin pin)
     {
         // Arrange
         var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
         var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-        var controlPinManager = new SerialControlPinManager(ControlPin.DTR, serialPortWrapperMock, delayMock);
+        var controlPinManager = new SerialControlPinManager(pin, serialPortWrapperMock, delayMock);
 
         // Act
-        controlPinManager.EnablePin();
+        await controlPinManager.EnablePin();
 
         // Assert
         controlPinManager.State.Should().Be(PinState.Enabled);
 
-        serialPortWrapperMock.Received().DtrEnable = true;
+        switch (pin)
+        {
+            case ControlPin.DTR:
+                serialPortWrapperMock.Received().DtrEnable = true;
+                break;
+            case ControlPin.RTS:
+                serialPortWrapperMock.Received().RtsEnable = true;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(pin), pin, null);
+        }
     }
 
     [Theory]
-    [MemberData(nameof(DurationTestData))]
-    public async Task DtrPinCanBeEnabledForDuration(TimeSpan enableDuration)
+    [CombinatorialData]
+    public async Task PinCanBeEnabledForDuration(ControlPin pin,
+        [CombinatorialMemberData(nameof(DurationTestData))]
+        TimeSpan enableDuration)
     {
         // Arrange
         var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-
         var delayMock = Substitute.For<IDelay>();
         delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-
-        var controlPinManager = new SerialControlPinManager(ControlPin.DTR, serialPortWrapperMock, delayMock);
+        var controlPinManager = new SerialControlPinManager(pin, serialPortWrapperMock, delayMock);
 
         // Act
         await controlPinManager.EnablePinFor(enableDuration);
@@ -53,81 +63,62 @@ public class SerialControlPinManagerTests
         // Assert
         controlPinManager.State.Should().Be(PinState.Disabled);
 
-        serialPortWrapperMock.Received().DtrEnable = true;
-        serialPortWrapperMock.Received().DtrEnable = false;
+        switch (pin)
+        {
+            case ControlPin.DTR:
+                serialPortWrapperMock.Received().DtrEnable = true;
+                serialPortWrapperMock.Received().DtrEnable = false;
+                break;
+            case ControlPin.RTS:
+                serialPortWrapperMock.Received().RtsEnable = true;
+                serialPortWrapperMock.Received().RtsEnable = false;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(pin), pin, null);
+        }
+
         await delayMock.Received().Delay(Arg.Is<TimeSpan>(duration => duration >= Timings.MinimumSignalSwitchTime));
     }
 
-    [Fact]
-    public void RtsPinCanBeEnabled()
-    {
-        // Arrange
-        var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-        var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-        var controlPinManager = new SerialControlPinManager(ControlPin.RTS, serialPortWrapperMock, delayMock);
-
-        // Act
-        controlPinManager.EnablePin();
-
-        // Assert
-        controlPinManager.State.Should().Be(PinState.Enabled);
-
-        serialPortWrapperMock.Received().RtsEnable = true;
-    }
-
     [Theory]
-    [MemberData(nameof(DurationTestData))]
-    public async Task RtsPinCanBeEnabledForDuration(TimeSpan enableDuration)
+    [CombinatorialData]
+    public async Task PinCanBeDisabled(ControlPin pin)
     {
         // Arrange
         var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-
         var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-
-        var controlPinManager = new SerialControlPinManager(ControlPin.RTS, serialPortWrapperMock, delayMock);
+        var controlPinManager = new SerialControlPinManager(pin, serialPortWrapperMock, delayMock);
 
         // Act
-        await controlPinManager.EnablePinFor(enableDuration);
+        await controlPinManager.DisablePin();
 
         // Assert
         controlPinManager.State.Should().Be(PinState.Disabled);
 
-        serialPortWrapperMock.Received().RtsEnable = true;
-        serialPortWrapperMock.Received().RtsEnable = false;
-        await delayMock.Received().Delay(Arg.Is<TimeSpan>(duration => duration >= Timings.MinimumSignalSwitchTime));
-    }
-
-    [Fact]
-    public void DtrPinCanBeDisabled()
-    {
-        // Arrange
-        var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-        var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-        var controlPinManager = new SerialControlPinManager(ControlPin.DTR, serialPortWrapperMock, delayMock);
-
-        // Act
-        controlPinManager.DisablePin();
-
-        // Assert
-        controlPinManager.State.Should().Be(PinState.Disabled);
-
-        serialPortWrapperMock.Received().DtrEnable = false;
+        switch (pin)
+        {
+            case ControlPin.DTR:
+                serialPortWrapperMock.Received().DtrEnable = false;
+                break;
+            case ControlPin.RTS:
+                serialPortWrapperMock.Received().RtsEnable = false;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(pin), pin, null);
+        }
     }
 
     [Theory]
-    [MemberData(nameof(DurationTestData))]
-    public async Task DtrPinCanBeDisabledForDuration(TimeSpan disableDuration)
+    [CombinatorialData]
+    public async Task PinCanBeDisabledForDuration(ControlPin pin,
+        [CombinatorialMemberData(nameof(DurationTestData))]
+        TimeSpan disableDuration)
     {
         // Arrange
         var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-
         var delayMock = Substitute.For<IDelay>();
         delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-
-        var controlPinManager = new SerialControlPinManager(ControlPin.DTR, serialPortWrapperMock, delayMock);
+        var controlPinManager = new SerialControlPinManager(pin, serialPortWrapperMock, delayMock);
 
         // Act
         await controlPinManager.DisablePinFor(disableDuration);
@@ -135,55 +126,26 @@ public class SerialControlPinManagerTests
         // Assert
         controlPinManager.State.Should().Be(PinState.Enabled);
 
-        serialPortWrapperMock.Received().DtrEnable = false;
-        serialPortWrapperMock.Received().DtrEnable = true;
-        await delayMock.Received().Delay(Arg.Is<TimeSpan>(duration => duration >= Timings.MinimumSignalSwitchTime));
-    }
+        switch (pin)
+        {
+            case ControlPin.DTR:
+                serialPortWrapperMock.Received().DtrEnable = false;
+                serialPortWrapperMock.Received().DtrEnable = true;
+                break;
+            case ControlPin.RTS:
+                serialPortWrapperMock.Received().RtsEnable = false;
+                serialPortWrapperMock.Received().RtsEnable = true;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(pin), pin, null);
+        }
 
-    [Fact]
-    public void RtsPinCanBeDisabled()
-    {
-        // Arrange
-        var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-        var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-        var controlPinManager = new SerialControlPinManager(ControlPin.RTS, serialPortWrapperMock, delayMock);
-
-        // Act
-        controlPinManager.DisablePin();
-
-        // Assert
-        controlPinManager.State.Should().Be(PinState.Disabled);
-        serialPortWrapperMock.Received().RtsEnable = false;
-    }
-
-    [Theory]
-    [MemberData(nameof(DurationTestData))]
-    public async Task RtsPinCanBeDisabledForDuration(TimeSpan disableDuration)
-    {
-        // Arrange
-        var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-
-        var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-
-        var controlPinManager = new SerialControlPinManager(ControlPin.RTS, serialPortWrapperMock, delayMock);
-
-        // Act
-        await controlPinManager.DisablePinFor(disableDuration);
-
-        // Assert
-        controlPinManager.State.Should().Be(PinState.Enabled);
-
-        serialPortWrapperMock.Received().RtsEnable = false;
-        serialPortWrapperMock.Received().RtsEnable = true;
         await delayMock.Received().Delay(Arg.Is<TimeSpan>(duration => duration >= Timings.MinimumSignalSwitchTime));
     }
 
     [Theory]
-    [InlineData(PinState.Disabled)]
-    [InlineData(PinState.Enabled)]
-    public void DtrPinCanBeToggled(PinState initialState)
+    [CombinatorialData]
+    public async Task PinCanBeToggled(ControlPin pin, PinState initialState)
     {
         // Arrange
         var expectedFinalState = initialState switch
@@ -196,106 +158,87 @@ public class SerialControlPinManagerTests
         var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
         var delayMock = Substitute.For<IDelay>();
         delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-        var controlPinManager = new SerialControlPinManager(ControlPin.DTR, serialPortWrapperMock, delayMock);
+        var controlPinManager = new SerialControlPinManager(pin, serialPortWrapperMock, delayMock);
 
         if (initialState == PinState.Enabled)
         {
-            controlPinManager.EnablePin();
+            await controlPinManager.EnablePin();
         }
         else
         {
-            controlPinManager.DisablePin();
+            await controlPinManager.DisablePin();
         }
 
         // Act
-        controlPinManager.TogglePin();
+        await controlPinManager.TogglePin();
 
         // Assert
         controlPinManager.State.Should().Be(expectedFinalState);
 
-        serialPortWrapperMock.Received().DtrEnable = true;
-        serialPortWrapperMock.Received().DtrEnable = false;
+        switch (pin)
+        {
+            case ControlPin.DTR:
+                serialPortWrapperMock.Received().DtrEnable = true;
+                serialPortWrapperMock.Received().DtrEnable = false;
+                break;
+            case ControlPin.RTS:
+                serialPortWrapperMock.Received().RtsEnable = true;
+                serialPortWrapperMock.Received().RtsEnable = false;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(pin), pin, null);
+        }
     }
 
     [Theory]
-    [MemberData(nameof(DurationTestData))]
-    public async Task DtrPinCanBeToggledForDuration(TimeSpan toogleDuration)
-    {
-        // Arrange
-        var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-
-        var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-
-        var controlPinManager = new SerialControlPinManager(ControlPin.DTR, serialPortWrapperMock, delayMock);
-
-        // Act
-        await controlPinManager.TogglePinFor(toogleDuration);
-
-        // Assert
-        controlPinManager.State.Should().Be(PinState.Disabled);
-
-        serialPortWrapperMock.Received().DtrEnable = true;
-        serialPortWrapperMock.Received().DtrEnable = false;
-        await delayMock.Received().Delay(Arg.Is<TimeSpan>(duration => duration >= Timings.MinimumSignalSwitchTime));
-    }
-
-    [Theory]
-    [InlineData(PinState.Disabled)]
-    [InlineData(PinState.Enabled)]
-    public void RtsPinCanBeToggled(PinState initialState)
+    [CombinatorialData]
+    public async Task PinCanBeToggledForDuration(ControlPin pin,
+        PinState initialState,
+        [CombinatorialMemberData(nameof(DurationTestData))]
+        TimeSpan toggleDuration)
     {
         // Arrange
         var expectedFinalState = initialState switch
         {
-            PinState.Disabled => PinState.Enabled,
-            PinState.Enabled => PinState.Disabled,
+            PinState.Disabled => PinState.Disabled,
+            PinState.Enabled => PinState.Enabled,
             _ => throw new ArgumentOutOfRangeException(nameof(initialState), initialState, null)
         };
 
         var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
         var delayMock = Substitute.For<IDelay>();
         delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-        var controlPinManager = new SerialControlPinManager(ControlPin.RTS, serialPortWrapperMock, delayMock);
+        var controlPinManager = new SerialControlPinManager(pin, serialPortWrapperMock, delayMock);
 
         if (initialState == PinState.Enabled)
         {
-            controlPinManager.EnablePin();
+            await controlPinManager.EnablePin();
         }
         else
         {
-            controlPinManager.DisablePin();
+            await controlPinManager.DisablePin();
         }
-
-        // Act
-        controlPinManager.TogglePin();
-
-        // Assert
-        controlPinManager.State.Should().Be(expectedFinalState);
-        serialPortWrapperMock.Received().RtsEnable = true;
-        serialPortWrapperMock.Received().RtsEnable = false;
-    }
-
-    [Theory]
-    [MemberData(nameof(DurationTestData))]
-    public async Task RtsPinCanBeToggledForDuration(TimeSpan toggleDuration)
-    {
-        // Arrange
-        var serialPortWrapperMock = Substitute.For<ISerialPortWrapper>();
-
-        var delayMock = Substitute.For<IDelay>();
-        delayMock.Delay(Arg.Any<TimeSpan>()).ReturnsForAnyArgs(Task.CompletedTask);
-
-        var controlPinManager = new SerialControlPinManager(ControlPin.RTS, serialPortWrapperMock, delayMock);
 
         // Act
         await controlPinManager.TogglePinFor(toggleDuration);
 
         // Assert
-        controlPinManager.State.Should().Be(PinState.Disabled);
+        controlPinManager.State.Should().Be(expectedFinalState);
 
-        serialPortWrapperMock.Received().RtsEnable = true;
-        serialPortWrapperMock.Received().RtsEnable = false;
+        switch (pin)
+        {
+            case ControlPin.DTR:
+                serialPortWrapperMock.Received().DtrEnable = true;
+                serialPortWrapperMock.Received().DtrEnable = false;
+                break;
+            case ControlPin.RTS:
+                serialPortWrapperMock.Received().RtsEnable = true;
+                serialPortWrapperMock.Received().RtsEnable = false;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(pin), pin, null);
+        }
+
         await delayMock.Received().Delay(Arg.Is<TimeSpan>(duration => duration >= Timings.MinimumSignalSwitchTime));
     }
 
@@ -346,14 +289,11 @@ public class SerialControlPinManagerTests
         }
     }
 
-    public static IEnumerable<TimeSpan> AnotherDurationData =>
-        DurationTestData.Select(objects => objects[0]).Cast<TimeSpan>();
-
     [Theory]
     [CombinatorialData]
     public async Task PinCanBeSignaledForDuration(ControlPin pin,
         PinState initialPinState,
-        [CombinatorialMemberData(nameof(AnotherDurationData))]
+        [CombinatorialMemberData(nameof(DurationTestData))]
         TimeSpan signalDuration)
     {
         // Arrange
