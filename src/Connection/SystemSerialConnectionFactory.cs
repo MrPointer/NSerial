@@ -1,9 +1,11 @@
 ﻿using System.IO;
 using System.IO.Ports;
+using NSerial.Control;
+using NSerial.Core;
 using NSerial.Model;
 using Optional;
 
-namespace NSerial.Connection.Port;
+namespace NSerial.Connection;
 
 /// <summary>
 /// Creates a <see cref="ISerialConnection" /> from a <see cref="ConnectionInfo" />.
@@ -15,7 +17,7 @@ public class SystemSerialConnectionFactory : ISerialConnectionFactory
     {
         try
         {
-            var systemPort = new SerialPort(connectionInfo.PortName, connectionInfo.BaudRate);
+            var systemPort = new SerialPortWrapper(new SerialPort(connectionInfo.PortName, connectionInfo.BaudRate));
 
             if (connectionInfo.Parity.HasValue)
             {
@@ -37,7 +39,11 @@ public class SystemSerialConnectionFactory : ISerialConnectionFactory
                 systemPort.Handshake = connectionInfo.Handshake.Value;
             }
 
-            return Option.Some<ISerialConnection>(new SerialConnection(systemPort, connectionInfo));
+            var dtrPinManager = new SerialControlPinManager(ControlPin.DTR, systemPort, new TaskDelay());
+            var rtsPinManager = new SerialControlPinManager(ControlPin.RTS, systemPort, new TaskDelay());
+
+            return Option.Some<ISerialConnection>(new SerialConnection(systemPort, connectionInfo, dtrPinManager,
+                rtsPinManager, dtrPinManager, rtsPinManager));
         }
         catch (IOException)
         {

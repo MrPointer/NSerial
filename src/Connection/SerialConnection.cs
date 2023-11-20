@@ -4,6 +4,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Threading.Tasks;
 using NSerial.Control;
+using NSerial.Core;
 using NSerial.Model;
 
 namespace NSerial.Connection;
@@ -20,19 +21,18 @@ public class SerialConnection : ISerialConnection
     /// <param name="connectionInfo">The connection info associated with this connection.</param>
     /// <exception cref="InvalidOperationException">PinSignalSender cannot be casted from their respective
     /// <see cref="IControlPinManager" />.</exception>
-    public SerialConnection(SerialPort underlyingConnection, ConnectionInfo connectionInfo)
+    public SerialConnection(ISerialPortWrapper underlyingConnection, ConnectionInfo connectionInfo
+        , IControlPinManager dtrPinManager, IControlPinManager rtsPinManager,
+        IPinSignalSender? dtrPinSignalSender = null,
+        IPinSignalSender? rtsPinSignalSender = null)
     {
         UnderlyingConnection = underlyingConnection;
         ConnectionInfo = connectionInfo;
 
-        DtrPinManager = new RS232ControlPinManager(ControlPin.DTR, underlyingConnection);
-        RtsPinManager = new RS232ControlPinManager(ControlPin.RTS, underlyingConnection);
-        DtrPinSignalSender = DtrPinManager as RS232ControlPinManager ??
-                             throw new InvalidOperationException(
-                                 "DTR pin manager is not of type RS232ControlPinManager");
-        RtsPinSignalSender = RtsPinManager as RS232ControlPinManager ??
-                             throw new InvalidOperationException(
-                                 "RTS pin manager is not of type RS232ControlPinManager");
+        DtrPinManager = dtrPinManager;
+        RtsPinManager = rtsPinManager;
+        DtrPinSignalSender = dtrPinSignalSender;
+        RtsPinSignalSender = rtsPinSignalSender;
 
         UnderlyingConnection.DataReceived += (sender, args) =>
         {
@@ -111,7 +111,7 @@ public class SerialConnection : ISerialConnection
     /// <summary>
     ///   The underlying <see cref="SerialPort" />.
     /// </summary>
-    public SerialPort UnderlyingConnection { get; }
+    public ISerialPortWrapper UnderlyingConnection { get; }
 
     private readonly Dictionary<int, EventHandler<DataReceivedEventArgs>> m_dataReceivedHandlers = new();
 

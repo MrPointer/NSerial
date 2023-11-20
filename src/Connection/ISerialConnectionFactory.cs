@@ -2,7 +2,7 @@
 using NSerial.Model;
 using Optional;
 
-namespace NSerial.Connection.Port;
+namespace NSerial.Connection;
 
 /// <summary>
 /// Creates a <see cref="ISerialConnection"/> from a <see cref="ConnectionInfo"/>.

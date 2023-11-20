@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using NSerial.Model;
 
 namespace NSerial.Control;
 
@@ -46,4 +47,14 @@ public interface IControlPinManager
     /// <param name="duration">Duration to toggle for</param>
     /// <returns></returns>
     Task TogglePinFor(TimeSpan duration);
+
+    /// <summary>
+    /// Gets the pin that is being managed.
+    /// </summary>
+    public ControlPin Pin { get; }
+
+    /// <summary>
+    /// Gets the current state of the managed pin.
+    /// </summary>
+    public PinState State { get; }
 }

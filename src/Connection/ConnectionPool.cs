@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Ports;
 using System.Linq;
 using NSerial.Model;
 
@@ -10,6 +8,23 @@ namespace NSerial.Connection;
 /// <inheritdoc />
 public class ConnectionPool : IConnectionPool
 {
+    /// <summary>
+    /// Creates a new instance of <see cref="ConnectionPool"/>.
+    /// </summary>
+    public ConnectionPool()
+    {
+        ConnectionFactory = new SystemSerialConnectionFactory();
+    }
+
+    /// <summary>
+    /// Creates a new instance of <see cref="ConnectionPool"/> with a custom <see cref="ISerialConnectionFactory"/>.
+    /// </summary>
+    /// <param name="connectionFactory">The <see cref="ISerialConnectionFactory"/> to use.</param>
+    public ConnectionPool(ISerialConnectionFactory connectionFactory)
+    {
+        ConnectionFactory = connectionFactory;
+    }
+
     /// <inheritdoc />
     public ConnectionPoolResult AddConnection(ConnectionInfo connectionInfo)
     {
@@ -18,17 +33,14 @@ public class ConnectionPool : IConnectionPool
             return ConnectionPoolError.ConnectionAlreadyExists;
         }
 
-        try
-        {
-            var connection = new SerialConnection(new SerialPort(connectionInfo.PortName, connectionInfo.BaudRate),
-                connectionInfo);
-            Connections.Add(connectionInfo.PortName, connection);
-            return ConnectionPoolResult.FromISerialConnection(connection);
-        }
-        catch (IOException)
-        {
-            return ConnectionPoolError.FailedToCreateConnection;
-        }
+        var createResult = ConnectionFactory.CreateSerialConnection(connectionInfo);
+        return createResult.Match(connection =>
+            {
+                Connections.Add(connectionInfo.PortName, connection);
+                return ConnectionPoolResult.FromISerialConnection(connection);
+            },
+            () => ConnectionPoolError.FailedToCreateConnection
+        );
     }
 
     /// <inheritdoc />
@@ -110,6 +122,11 @@ public class ConnectionPool : IConnectionPool
     /// <inheritdoc />
     public IDictionary<string, ISerialConnection> Connections { get; } =
         new Dictionary<string, ISerialConnection>();
+
+    /// <summary>
+    /// The <see cref="ISerialConnectionFactory"/> used to create connections.
+    /// </summary>
+    public ISerialConnectionFactory ConnectionFactory { get; }
 
     /// <summary>
     /// System-wide connection pool, used as a singleton.
